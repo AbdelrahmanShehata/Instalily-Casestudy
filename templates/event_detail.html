@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.name }} - DuPont Tedlar Lead Database{% endblock %}
+
+{% block page_title %}{{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Event Overview Card -->
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Event Details</h6>
+                <span class="badge bg-primary">
+                    Relevance Score: {{ "%.2f"|format(event.relevance_score or 0) }}
+                </span>
+            </div>
+            <div class="card-body">
+                {% if event.website %}
+                <p>
+                    <a href="{{ event.website }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-globe"></i> Visit Event Website
+                    </a>
+                </p>
+                {% endif %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p>
+                            <strong><i class="fas fa-tag me-2"></i>Event Type:</strong><br>
+                            {{ event.event_type or 'Not specified' }}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p>
+                            <strong><i class="fas fa-map-marker-alt me-2"></i>Location:</strong><br>
+                            {{ event.location or 'Not specified' }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p>
+                            <strong><i class="fas fa-calendar-alt me-2"></i>Start Date:</strong><br>
+                            {{ event.start_date.strftime('%B %d, %Y') if event.start_date else 'Not specified' }}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p>
+                            <strong><i class="fas fa-calendar-check me-2"></i>End Date:</strong><br>
+                            {{ event.end_date.strftime('%B %d, %Y') if event.end_date else 'Not specified' }}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if event.description %}
+                <div class="mt-4">
+                    <h6 class="font-weight-bold">Description</h6>
+                    <p>{{ event.description }}</p>
+                </div>
+                {% endif %}
+                
+                {% if event.notes %}
+                <div class="mt-4">
+                    <h6 class="font-weight-bold">Notes</h6>
+                    <p>{{ event.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Event Strategy Card -->
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 tedlar-primary">
+                <h6 class="m-0 font-weight-bold">DuPont Tedlar® Event Strategy</h6>
+            </div>
+            <div class="card-body">
+                <h5>Attendance Recommendation</h5>
+                
+                {% if event.relevance_score and event.relevance_score > 0.7 %}
+                <div class="alert alert-success">
+                    <strong>High Priority Event</strong> - Strongly recommended for Tedlar® team participation
+                </div>
+                {% elif event.relevance_score and event.relevance_score > 0.4 %}
+                <div class="alert alert-warning">
+                    <strong>Medium Priority Event</strong> - Consider attendance based on schedule and budget
+                </div>
+                {% else %}
+                <div class="alert alert-danger">
+                    <strong>Low Priority Event</strong> - Minimal alignment with Tedlar® target markets
+                </div>
+                {% endif %}
+                
+                <div class="icp-section mt-4">
+                    <h6 class="font-weight-bold text-primary">Industry Alignment</h6>
+                    <p>
+                        {% if event.event_type %}
+                            {{ event.event_type }} - 
+                            {% if 'sign' in event.event_type|lower or 'graphic' in event.event_type|lower or 'film' in event.event_type|lower or 'print' in event.event_type|lower %}
+                                <span class="text-success">Strong alignment with Tedlar's focus industries.</span>
+                            {% elif 'display' in event.event_type|lower or 'outdoor' in event.event_type|lower or 'architect' in event.event_type|lower %}
+                                <span class="text-warning">Moderate overlap with Tedlar's applications.</span>
+                            {% else %}
+                                <span class="text-danger">Limited connection to Tedlar's target verticals.</span>
+                            {% endif %}
+                        {% else %}
+                            Industry information not available.
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="icp-section">
+                    <h6 class="font-weight-bold text-primary">Strategic Opportunities</h6>
+                    <p>
+                        {% if companies %}
+                            <span class="text-success">
+                                This event connects Tedlar® with {{ companies|length }} potential customer{{ 's' if companies|length > 1 else '' }},
+                                including key industry players.
+                            </span>
+                        {% else %}
+                            Insufficient company data to assess strategic opportunities.
+                        {% endif %}
+                    </p>
+                    
+                    <p>
+                        {% if event.description %}
+                            Based on event description, there is 
+                            {% if 'signage' in event.description|lower or 'graphic' in event.description|lower or 'film' in event.description|lower or 'protection' in event.description|lower %}
+                                <span class="text-success">strong evidence of market alignment</span>
+                            {% elif 'print' in event.description|lower or 'display' in event.description|lower or 'outdoor' in event.description|lower %}
+                                <span class="text-warning">potential market overlap</span>
+                            {% else %}
+                                <span class="text-danger">limited direct market alignment</span>
+                            {% endif %}
+                            with Tedlar's focus on durable, weather-resistant graphic films.
+                        {% else %}
+                            Insufficient information to assess market alignment.
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="icp-section">
+                    <h6 class="font-weight-bold text-primary">Recommended Actions</h6>
+                    <ul>
+                        {% if event.relevance_score and event.relevance_score > 0.7 %}
+                            <li>Consider exhibiting or sponsoring the event</li>
+                            <li>Send a team of sales and technical personnel</li>
+                            <li>Prepare specific marketing materials for this audience</li>
+                            <li>Schedule meetings with key accounts in advance</li>
+                        {% elif event.relevance_score and event.relevance_score > 0.4 %}
+                            <li>Consider attending without a full exhibition booth</li>
+                            <li>Send 1-2 representatives to network and gather intelligence</li>
+                            <li>Focus on scheduled meetings with known prospects</li>
+                        {% else %}
+                            <li>Monitor event content for industry trends</li>
+                            <li>Consider lighter engagement (e.g., digital participation)</li>
+                            <li>Evaluate for future years based on industry developments</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Associated Companies Card -->
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Associated Companies</h6>
+            </div>
+            <div class="card-body">
+                {% if companies %}
+                <div class="row">
+                    {% for company in companies %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card company-card h-100" data-href="{{ url_for('company_detail', company_id=company.company_id) }}">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">{{ company.name }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <span class="badge bg-primary relevance-badge">
+                                    Score: {{ "%.2f"|format(company.relevance_score or 0) }}
+                                </span>
+                                
+                                <p class="card-text">
+                                    {% if company.industry %}
+                                    <strong>Industry:</strong> {{ company.industry }}<br>
+                                    {% endif %}
+                                    
+                                    {% if company.estimated_revenue %}
+                                    <strong>Est. Revenue:</strong> {{ company.estimated_revenue }}<br>
+                                    {% endif %}
+                                </p>
+                                
+                                {% if company.description %}
+                                <p class="card-text text-truncate">{{ company.description }}</p>
+                                {% endif %}
+                                
+                                {% if company.website %}
+                                <a href="{{ company.website }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-globe"></i> Website
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer text-end">
+                                <small class="text-muted">Click for details</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No companies associated with this event yet. Run the company pipeline to find relevant companies.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - DuPont Tedlar Lead Database{% endblock %}
+
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-12 mb-4">
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Events</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ event_count }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Companies</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ company_count }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-building fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Executives</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ exec_count }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-user-tie fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Associations</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ assoc_count }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-handshake fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Events Card -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Top Events by Relevance</h6>
+                <a href="{{ url_for('events') }}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Relevance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in top_events %}
+                            <tr onclick="window.location='{{ url_for('event_detail', event_id=event.event_id) }}'">
+                                <td>{{ event.name }}</td>
+                                <td>{{ event.event_type }}</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ (event.relevance_score or 0) * 100 }}%;" 
+                                            aria-valuenow="{{ (event.relevance_score or 0) * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ "%.2f"|format(event.relevance_score or 0) }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Companies Card -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Top Companies by Relevance</h6>
+                <a href="{{ url_for('companies') }}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Revenue</th>
+                                <th>Relevance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for company in top_companies %}
+                            <tr onclick="window.location='{{ url_for('company_detail', company_id=company.company_id) }}'">
+                                <td>{{ company.name }}</td>
+                                <td>{{ company.estimated_revenue or 'Unknown' }}</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ (company.relevance_score or 0) * 100 }}%;" 
+                                            aria-valuenow="{{ (company.relevance_score or 0) * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ "%.2f"|format(company.relevance_score or 0) }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Executives Card -->
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Top Decision Makers</h6>
+                <a href="{{ url_for('executives') }}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                {% for exec in top_execs %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card executive-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ exec.name }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">{{ exec.title }}</h6>
+                                <p class="card-text">
+                                    <strong>Division:</strong> {{ exec.division or 'General' }}<br>
+                                    <strong>Relevance Score:</strong> {{ "%.2f"|format(exec.relevance_score or 0) }}
+                                </p>
+                                {% if exec.linkedin %}
+                                <a href="{{ exec.linkedin }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fab fa-linkedin"></i> LinkedIn Profile
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

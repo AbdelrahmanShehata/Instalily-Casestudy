@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Events - DuPont Tedlar Lead Database{% endblock %}
+
+{% block page_title %}Events & Trade Shows{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" id="eventSearch" class="form-control" placeholder="Search events...">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="btn-group" role="group" aria-label="Event filters">
+            <button type="button" class="btn btn-outline-primary active" data-filter="all">All</button>
+            <button type="button" class="btn btn-outline-primary" data-filter="trade show">Trade Shows</button>
+            <button type="button" class="btn btn-outline-primary" data-filter="conference">Conferences</button>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="eventsContainer">
+    {% for event in events %}
+    <div class="col-md-6 col-lg-4 mb-4 event-item" 
+         data-name="{{ event.name|lower }}" 
+         data-type="{{ event.event_type|lower if event.event_type else 'unknown' }}">
+        <div class="card event-card h-100" data-href="{{ url_for('event_detail', event_id=event.event_id) }}">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ event.name }}</h5>
+            </div>
+            <div class="card-body">
+                <span class="badge bg-primary relevance-badge">
+                    Score: {{ "%.2f"|format(event.relevance_score or 0) }}
+                </span>
+                
+                <p class="card-text">
+                    {% if event.event_type %}
+                    <strong>Type:</strong> {{ event.event_type }}<br>
+                    {% endif %}
+                    
+                    {% if event.start_date %}
+                    <strong>Date:</strong> {{ event.start_date.strftime('%B %d, %Y') }}
+                    {% if event.end_date and event.end_date != event.start_date %}
+                     - {{ event.end_date.strftime('%B %d, %Y') }}
+                    {% endif %}<br>
+                    {% endif %}
+                    
+                    {% if event.location %}
+                    <strong>Location:</strong> {{ event.location }}<br>
+                    {% endif %}
+                </p>
+                
+                {% if event.description %}
+                <p class="card-text text-truncate">{{ event.description }}</p>
+                {% endif %}
+                
+                {% if event.website %}
+                <a href="{{ event.website }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-globe"></i> Website
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-footer text-end">
+                <small class="text-muted">Click for associated companies</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not events %}
+<div class="alert alert-info">
+    No events found. Run the pipeline to generate event data.
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search functionality
+        $("#eventSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".event-item").filter(function() {
+                $(this).toggle($(this).data("name").indexOf(value) > -1);
+            });
+        });
+        
+        // Filtering functionality
+        $('[data-filter]').click(function() {
+            // Update active button
+            $('[data-filter]').removeClass('active');
+            $(this).addClass('active');
+            
+            var filterType = $(this).data('filter');
+            
+            if (filterType === 'all') {
+                $('.event-item').show();
+            } else {
+                $('.event-item').hide();
+                $('.event-item').filter(function() {
+                    return $(this).data('type').includes(filterType);
+                }).show();
+            }
+        });
+    });
+</script>
+{% endblock %}

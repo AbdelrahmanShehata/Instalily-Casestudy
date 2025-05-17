@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Companies - DuPont Tedlar Lead Database{% endblock %}
+
+{% block page_title %}Companies{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" id="companySearch" class="form-control" placeholder="Search companies...">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="btn-group" role="group" aria-label="Sort options">
+            <button type="button" class="btn btn-outline-primary active" data-sort="relevance">Sort by Relevance</button>
+            <button type="button" class="btn btn-outline-primary" data-sort="name">Sort by Name</button>
+            <button type="button" class="btn btn-outline-primary" data-sort="revenue">Sort by Revenue</button>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="companiesContainer">
+    {% for company in companies %}
+    <div class="col-md-6 col-lg-4 mb-4 company-item" 
+         data-name="{{ company.name|lower }}" 
+         data-relevance="{{ company.relevance_score or 0 }}"
+         data-revenue="{{ company.estimated_revenue or 0 }}">
+        <div class="card company-card h-100" data-href="{{ url_for('company_detail', company_id=company.company_id) }}">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ company.name }}</h5>
+            </div>
+            <div class="card-body">
+                <span class="badge bg-primary relevance-badge">
+                    Score: {{ "%.2f"|format(company.relevance_score or 0) }}
+                </span>
+                
+                <p class="card-text">
+                    {% if company.industry %}
+                    <strong>Industry:</strong> {{ company.industry }}<br>
+                    {% endif %}
+                    
+                    {% if company.estimated_revenue %}
+                    <strong>Est. Revenue:</strong> {{ company.estimated_revenue }}<br>
+                    {% endif %}
+                    
+                    {% if company.company_size %}
+                    <strong>Size:</strong> {{ company.company_size }} employees<br>
+                    {% endif %}
+                </p>
+                
+                {% if company.description %}
+                <p class="card-text text-truncate">{{ company.description }}</p>
+                {% endif %}
+                
+                {% if company.website %}
+                <a href="{{ company.website }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-globe"></i> Website
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-footer text-end">
+                <small class="text-muted">Click for details</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not companies %}
+<div class="alert alert-info">
+    No companies found. Run the pipeline to generate company data.
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search functionality
+        $("#companySearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".company-item").filter(function() {
+                $(this).toggle($(this).data("name").indexOf(value) > -1);
+            });
+        });
+        
+        // Sorting functionality
+        $('[data-sort]').click(function() {
+            // Update active button
+            $('[data-sort]').removeClass('active');
+            $(this).addClass('active');
+            
+            var sortBy = $(this).data('sort');
+            var $companiesContainer = $('#companiesContainer');
+            var $companies = $companiesContainer.find('.company-item');
+            
+            $companies.sort(function(a, b) {
+                if (sortBy === 'name') {
+                    return $(a).data('name') > $(b).data('name') ? 1 : -1;
+                } else if (sortBy === 'relevance') {
+                    return $(b).data('relevance') - $(a).data('relevance');
+                } else if (sortBy === 'revenue') {
+                    return $(b).data('revenue') - $(a).data('revenue');
+                }
+                return 0;
+            });
+            
+            $companies.detach().appendTo($companiesContainer);
+        });
+    });
+</script>
+{% endblock %}

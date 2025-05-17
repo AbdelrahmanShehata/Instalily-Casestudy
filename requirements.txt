@@ -1,0 +1,7 @@
+sqlalchemy
+openai
+requests
+pandas
+python-dotenv
+matplotlib
+flask

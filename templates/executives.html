@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Executives - DuPont Tedlar Lead Database{% endblock %}
+
+{% block page_title %}Decision Makers{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" id="execSearch" class="form-control" placeholder="Search executives...">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="btn-group" role="group" aria-label="Sort options">
+            <button type="button" class="btn btn-outline-primary active" data-sort="relevance">Sort by Relevance</button>
+            <button type="button" class="btn btn-outline-primary" data-sort="name">Sort by Name</button>
+            <button type="button" class="btn btn-outline-primary" data-sort="company">Sort by Company</button>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="executivesContainer">
+    {% for exec in executives %}
+    <div class="col-md-6 col-lg-4 mb-4 executive-item" 
+         data-name="{{ exec.name|lower }}" 
+         data-company="{{ exec.company.name|lower if exec.company else '' }}"
+         data-relevance="{{ exec.relevance_score or 0 }}">
+        <div class="card h-100 {{ 'border-success' if exec.relevance_score and exec.relevance_score > 0.7 else 'border-warning' if exec.relevance_score and exec.relevance_score > 0.4 else '' }}">
+            <div class="card-header d-flex justify-content-between">
+                <h5 class="card-title mb-0">{{ exec.name }}</h5>
+                <span class="badge {{ 'bg-success' if exec.relevance_score and exec.relevance_score > 0.7 else 'bg-warning' if exec.relevance_score and exec.relevance_score > 0.4 else 'bg-secondary' }}">
+                    {{ "%.2f"|format(exec.relevance_score or 0) }}
+                </span>
+            </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">{{ exec.title }}</h6>
+                
+                {% if exec.company %}
+                <p class="card-text">
+                    <strong>Company:</strong> 
+                    <a href="{{ url_for('company_detail', company_id=exec.company.company_id) }}">{{ exec.company.name }}</a>
+                </p>
+                {% endif %}
+                
+                <p class="card-text">
+                    {% if exec.division %}
+                    <strong>Division:</strong> {{ exec.division }}<br>
+                    {% endif %}
+                    
+                    {% if exec.email %}
+                    <strong>Email:</strong> {{ exec.email }}<br>
+                    {% endif %}
+                    
+                    {% if exec.phone %}
+                    <strong>Phone:</strong> {{ exec.phone }}<br>
+                    {% endif %}
+                </p>
+                
+                <div class="mt-3">
+                    {% if exec.linkedin %}
+                    <a href="{{ exec.linkedin }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fab fa-linkedin"></i> LinkedIn Profile
+                    </a>
+                    {% endif %}
+                    
+                    {% if exec.email %}
+                    <a href="mailto:{{ exec.email }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-envelope"></i> Email
+                    </a>
+                    {% endif %}
+                    
+                    <button class="btn btn-sm btn-outline-success viewOutreach" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#outreachModal"
+                            data-exec-id="{{ exec.person_id }}"
+                            data-exec-name="{{ exec.name }}"
+                            data-exec-title="{{ exec.title }}"
+                            data-company-name="{{ exec.company.name if exec.company else '' }}">
+                        <i class="fas fa-comment-alt"></i> Outreach
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not executives %}
+<div class="alert alert-info">
+    No executives found. Run the DecisionMakerFinder to generate executive data.
+</div>
+{% endif %}
+
+<!-- Outreach Modal -->
+<div class="modal fade" id="outreachModal" tabindex="-1" aria-labelledby="outreachModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header tedlar-primary">
+                <h5 class="modal-title" id="outreachModalLabel">LinkedIn Outreach Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="executiveInfo" class="mb-4">
+                    <h6>Personalized for <span id="execName">Executive</span></h6>
+                    <p class="text-muted"><span id="execTitle">Title</span> at <span id="companyName">Company</span></p>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">LinkedIn Connection Request</h6>
+                    </div>
+                    <div class="card-body">
+                        <p id="linkedinMessage" class="mb-0">
+                            Noticed your work in the signage industry. DuPont Tedlar® offers protective PVF films for outdoor signage with superior weathering and graffiti resistance. Would love to connect about potential applications for your projects.
+                        </p>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button class="btn btn-sm btn-outline-secondary me-2" id="copyLinkedIn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" id="openLinkedIn">
+                                <i class="fab fa-linkedin"></i> Open LinkedIn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Follow-up Email Template</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Subject:</strong> DuPont Tedlar® Films for <span class="companyName">Company</span>'s Signage Applications</p>
+                        <hr>
+                        <div id="emailTemplate">
+                            <p>Dear <span class="execName">Executive</span>,</p>
+                            
+                            <p>Thank you for connecting on LinkedIn. I wanted to follow up regarding how DuPont Tedlar® protective PVF films could potentially benefit <span class="companyName">Company</span>'s projects.</p>
+                            
+                            <p>Our films offer unique advantages for signage applications:</p>
+                            <ul>
+                                <li>20+ year durability even in extreme weather conditions</li>
+                                <li>Superior UV and chemical resistance</li>
+                                <li>Easy-clean surface with graffiti resistance</li>
+                                <li>Compatibility with various printing technologies</li>
+                            </ul>
+                            
+                            <p>Several industry leaders are already incorporating our solutions into their high-performance outdoor signage products.</p>
+                            
+                            <p>Would you be available for a brief call next week to discuss how Tedlar® might align with <span class="companyName">Company</span>'s requirements?</p>
+                            
+                            <p>Best regards,<br>[Your Name]<br>DuPont Tedlar®</p>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" id="copyEmail">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search functionality
+        $("#execSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".executive-item").filter(function() {
+                var name = $(this).data("name");
+                var company = $(this).data("company");
+                return (name.indexOf(value) > -1 || company.indexOf(value) > -1);
+            }).show();
+            $(".executive-item").filter(function() {
+                var name = $(this).data("name");
+                var company = $(this).data("company");
+                return (name.indexOf(value) === -1 && company.indexOf(value) === -1);
+            }).hide();
+        });
+        
+        // Sorting functionality
+        $('[data-sort]').click(function() {
+            // Update active button
+            $('[data-sort]').removeClass('active');
+            $(this).addClass('active');
+            
+            var sortBy = $(this).data('sort');
+            var $execContainer = $('#executivesContainer');
+            var $executives = $execContainer.find('.executive-item');
+            
+            $executives.sort(function(a, b) {
+                if (sortBy === 'name') {
+                    return $(a).data('name') > $(b).data('name') ? 1 : -1;
+                } else if (sortBy === 'relevance') {
+                    return $(b).data('relevance') - $(a).data('relevance');
+                } else if (sortBy === 'company') {
+                    return $(a).data('company') > $(b).data('company') ? 1 : -1;
+                }
+                return 0;
+            });
+            
+            $executives.detach().appendTo($execContainer);
+        });
+        
+        // Handle outreach button click
+        $('.viewOutreach').click(function() {
+            const execName = $(this).data('exec-name');
+            const execTitle = $(this).data('exec-title');
+            const companyName = $(this).data('company-name');
+            
+            // Update modal with executive info
+            $('#execName, .execName').text(execName);
+            $('#execTitle').text(execTitle);
+            $('#companyName, .companyName').text(companyName);
+            
+            // Generate personalized outreach message
+            let industryFocus = 'the signage industry';
+            if (execTitle) {
+                if (execTitle.toLowerCase().includes('marketing')) {
+                    industryFocus = 'marketing';
+                } else if (execTitle.toLowerCase().includes('sales')) {
+                    industryFocus = 'sales';
+                } else if (execTitle.toLowerCase().includes('product')) {
+                    industryFocus = 'product development';
+                } else if (execTitle.toLowerCase().includes('design')) {
+                    industryFocus = 'design';
+                }
+            }
+            
+            const linkedinMessage = `Noticed your work in ${industryFocus}. DuPont Tedlar® offers protective PVF films for outdoor signage with superior weathering and graffiti resistance. Would love to connect about potential applications for ${companyName}.`;
+            
+            $('#linkedinMessage').text(linkedinMessage);
+        });
+        
+        // Copy functionality for LinkedIn message
+        $('#copyLinkedIn').click(function() {
+            const message = $('#linkedinMessage').text();
+            navigator.clipboard.writeText(message.trim());
+            
+            // Show copied feedback
+            const originalText = $(this).html();
+            $(this).html('<i class="fas fa-check"></i> Copied!');
+            setTimeout(() => {
+                $(this).html(originalText);
+            }, 2000);
+        });
+        
+        // Copy functionality for email template
+        $('#copyEmail').click(function() {
+            const subject = `DuPont Tedlar® Films for ${$('#companyName').text()}'s Signage Applications`;
+            const body = $('#emailTemplate').text();
+            
+            // Format as email with subject
+            const emailContent = `Subject: ${subject}\n\n${body}`;
+            navigator.clipboard.writeText(emailContent.trim());
+            
+            // Show copied feedback
+            const originalText = $(this).html();
+            $(this).html('<i class="fas fa-check"></i> Copied!');
+            setTimeout(() => {
+                $(this).html(originalText);
+            }, 2000);
+        });
+    });
+</script>
+{% endblock %}
